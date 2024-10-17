@@ -5,7 +5,7 @@ export type Product = {
   price: number;
 };
 
-export type PizzaSize = 'S' | 'M' | 'L' | 'XL';
+export type PizzaSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
 
 export type CartItem = {
   id: string;
