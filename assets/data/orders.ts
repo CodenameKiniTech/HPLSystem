@@ -78,6 +78,7 @@ const orders: Order[] = [
         product_id: products[8].id,
         products: products[8],
       },
+      
     ],
   },
 ];
