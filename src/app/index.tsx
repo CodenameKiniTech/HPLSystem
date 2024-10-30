@@ -4,13 +4,14 @@ import Button from '@components/Button';
 import { Link, Redirect } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
+import Colors from '@/constants/Colors';
 
 
 const index = () => {
   const {session, loading, isAdmin} = useAuth();
 
   if (loading) {
-    return <ActivityIndicator />;
+    return <ActivityIndicator size="large" style={{ alignItems: 'center', marginTop: 300 }} color={Colors.light.tint} />;
   }
 
   if (!session) {
