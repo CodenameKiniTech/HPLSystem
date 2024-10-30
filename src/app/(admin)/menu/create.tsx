@@ -4,7 +4,8 @@ import Colors from "@/constants/Colors";
 import { useState } from "react";
 import { View, Text, StyleSheet, TextInput, Image, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useInsertProduct } from "@/api/products";
 
 const CreateProductScreen = () => {
   const [name, setName] = useState("");
@@ -12,10 +13,14 @@ const CreateProductScreen = () => {
   const [errors, setErrors] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
-  const {id} = useLocalSearchParams();
-  const isUpdating = !!id; 
+  const { id } = useLocalSearchParams();
+  const isUpdating = !!id;
 
-  const resetField = () => {
+  const { mutate: insertProduct } = useInsertProduct();
+
+  const router = useRouter();
+
+  const resetFields = () => {
     setName("");
     setPrice("");
   };
@@ -44,16 +49,22 @@ const CreateProductScreen = () => {
     } else {
       onCreate();
     }
-  }
+  };
 
   const onCreate = () => {
     if (!validateInput()) {
       return;
     }
 
-    console.warn("Creating product: ", name);
-
-    resetField();
+    insertProduct(
+      { name, price: parseFloat(price), image },
+      {
+        onSuccess: () => {
+          resetFields();
+          router.back();
+        },
+      } 
+    );
   };
 
   const onUpdateCreate = () => {
@@ -63,7 +74,7 @@ const CreateProductScreen = () => {
 
     console.warn("Updating product: ", name);
 
-    resetField();
+    resetFields();
   };
 
   const pickImage = async () => {
@@ -81,25 +92,27 @@ const CreateProductScreen = () => {
   };
 
   const onDelete = () => {
-    console.warn('Deletee!');
-  }
+    console.warn("Deletee!");
+  };
 
   const confirmDelete = () => {
     Alert.alert("Confirm", "Are you sure you want to delete this product?", [
       {
-      text: 'Cancel', 
+        text: "Cancel",
       },
       {
-        text: 'Delete',
-        style: 'destructive',
+        text: "Delete",
+        style: "destructive",
         onPress: onDelete,
-      }
-  ]);
-  }
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
-        <Stack.Screen options={{ title: isUpdating ? 'Update Product' : 'Create Product' }} />
+      <Stack.Screen
+        options={{ title: isUpdating ? "Update Product" : "Create Product" }}
+      />
       <Image
         source={{ uri: image || defaultPizzaImage }}
         style={styles.image}
@@ -128,7 +141,11 @@ const CreateProductScreen = () => {
 
       <Text style={{ color: "red" }}>{errors}</Text>
       <Button onPress={onSubmit} text={isUpdating ? "Update" : "Create"} />
-      {isUpdating && <Text onPress={confirmDelete} style={styles.textButton}>Delete</Text>}
+      {isUpdating && (
+        <Text onPress={confirmDelete} style={styles.textButton}>
+          Delete
+        </Text>
+      )}
     </View>
   );
 };
