@@ -1,7 +1,4 @@
-import Button from "@/components/Button";
-import { defaultPizzaImage } from "@/components/ProductListItem";
-import Colors from "@/constants/Colors";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -19,19 +16,24 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "@/api/products";
+import Button from "@/components/Button";
+import { defaultPizzaImage } from "@/components/ProductListItem";
+import Colors from "@/constants/Colors";
 
 const CreateProductScreen = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [errors, setErrors] = useState("");
   const [image, setImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  // Separate loading states
+  const [isCreating, setCreating] = useState(false);
+  const [isUpdating, setUpdating] = useState(false);
+  const [isDeleting, setDeleting] = useState(false);
 
   const { id: idString } = useLocalSearchParams();
-  const id = parseFloat(
-    typeof idString === "string" ? idString : idString?.[0]
-  );
-  const isUpdating = !!idString;
+  const id = parseFloat(typeof idString === "string" ? idString : idString?.[0]);
+  const isUpdateMode = !!idString;
 
   const { mutate: insertProduct } = useInsertProduct();
   const { mutate: updateProduct } = useUpdateProduct();
@@ -67,12 +69,11 @@ const CreateProductScreen = () => {
       setErrors("Price is not a number!");
       return false;
     }
-
     return true;
   };
 
   const onSubmit = () => {
-    if (isUpdating) {
+    if (isUpdateMode) {
       onUpdate();
     } else {
       onCreate();
@@ -80,42 +81,40 @@ const CreateProductScreen = () => {
   };
 
   const onCreate = () => {
-    if (!validateInput()) {
-      return;
-    }
+    if (!validateInput()) return;
 
-    setLoading(true); // Show ActivityIndicator
+    setCreating(true); // Set create loading state
     insertProduct(
       { name, price: parseFloat(price), image },
       {
         onSuccess: () => {
-          setLoading(false); // Hide ActivityIndicator
+          setCreating(false);
           resetFields();
           router.back();
         },
+        onError: () => setCreating(false),
       }
     );
   };
 
   const onUpdate = () => {
-    if (!validateInput()) {
-      return;
-    }
-    setLoading(true); // Show ActivityIndicator
+    if (!validateInput()) return;
+
+    setUpdating(true); // Set update loading state
     updateProduct(
       { id, name, price: parseFloat(price), image },
       {
         onSuccess: () => {
-          setLoading(false); // Hide ActivityIndicator
+          setUpdating(false);
           resetFields();
           router.back();
         },
+        onError: () => setUpdating(false),
       }
     );
   };
 
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -129,15 +128,15 @@ const CreateProductScreen = () => {
   };
 
   const onDelete = () => {
-    setLoading(true); // Show ActivityIndicator
+    setDeleting(true); // Set delete loading state
     deleteProduct(id, {
       onSuccess: () => {
-        setLoading(false); // Hide ActivityIndicator
+        setDeleting(false);
         resetFields();
         router.replace("/(admin)");
       },
       onError: () => {
-        setLoading(false); // Hide ActivityIndicator on error as well
+        setDeleting(false);
         Alert.alert("Error", "Failed to delete the product. Please try again.");
       },
     });
@@ -145,32 +144,35 @@ const CreateProductScreen = () => {
 
   const confirmDelete = () => {
     Alert.alert("Confirm", "Are you sure you want to delete this product?", [
-      {
-        text: "Cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: onDelete,
-      },
+      { text: "Cancel" },
+      { text: "Delete", style: "destructive", onPress: onDelete },
     ]);
+  };
+
+  // Choose the appropriate loading message based on active state
+  const getLoadingMessage = () => {
+    if (isCreating) return "Creating product, please wait...";
+    if (isUpdating) return "Updating product, please wait...";
+    if (isDeleting) return "Deleting product, please wait...";
+    return "";
   };
 
   return (
     <View style={styles.container}>
       <Stack.Screen
-        options={{ title: isUpdating ? "Update Product" : "Create Product" }}
+        options={{ title: isUpdateMode ? "Update Product" : "Create Product" }}
       />
 
-      {/* Full-Screen Loading Overlay */}
-      {loading && (
+      {/* Full-Screen Loading Overlay with dynamic message */}
+      {(isCreating || isUpdating || isDeleting) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={Colors.light.tint} />
+          <Text style={styles.loadingText}>{getLoadingMessage()}</Text>
         </View>
       )}
 
       {/* Main content */}
-      {!loading && (
+      {!(isCreating || isUpdating || isDeleting) && (
         <>
           <Image
             source={{ uri: image || defaultPizzaImage }}
@@ -200,9 +202,9 @@ const CreateProductScreen = () => {
 
           <Text style={{ color: "red" }}>{errors}</Text>
 
-          <Button onPress={onSubmit} text={isUpdating ? "Update" : "Create"} />
+          <Button onPress={onSubmit} text={isUpdateMode ? "Update" : "Create"} />
 
-          {isUpdating && (
+          {isUpdateMode && (
             <Text onPress={confirmDelete} style={styles.textButton}>
               Delete
             </Text>
@@ -247,6 +249,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "gray",
   },
 });
 
