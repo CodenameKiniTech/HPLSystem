@@ -1,11 +1,16 @@
-import { Database } from './database.types';
+import { Database } from "./database.types";
 
-export type Tables<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row'];
-export type Enums<T extends keyof Database['public']['Enums']> =
-  Database['public']['Enums'][T];
+export type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 
+export type InsertTables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Insert"];
 
+export type UpdateTables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Update"];
+
+export type Enums<T extends keyof Database["public"]["Enums"]> =
+  Database["public"]["Enums"][T];
 
 export type Product = {
   id: number;
@@ -14,7 +19,7 @@ export type Product = {
   price: number;
 };
 
-export type PizzaSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
+export type PizzaSize = "S" | "M" | "L" | "XL" | "XXL";
 
 export type CartItem = {
   id: string;
@@ -25,13 +30,13 @@ export type CartItem = {
 };
 
 export const OrderStatusList: OrderStatus[] = [
-  'New',
-  'Cooking',
-  'Delivering',
-  'Delivered',
+  "Pending",
+  "In Progress",
+  "Completed",
+  "Cancelled",
 ];
 
-export type OrderStatus = 'New' | 'Cooking' | 'Delivering' | 'Delivered';
+export type OrderStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
 
 export type Order = {
   id: number;
