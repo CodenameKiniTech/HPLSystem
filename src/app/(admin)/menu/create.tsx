@@ -104,12 +104,14 @@ const CreateProductScreen = () => {
     );
   };
 
-  const onUpdate = () => {
+  const onUpdate = async () => {
     if (!validateInput()) return;
+
+    const imagePath = await uploadImage();
 
     setUpdating(true); // Set update loading state
     updateProduct(
-      { id, name, price: parseFloat(price), image },
+      { id, name, price: parseFloat(price), image: imagePath },
       {
         onSuccess: () => {
           setUpdating(false);
